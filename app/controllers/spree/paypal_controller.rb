@@ -6,11 +6,10 @@ module Spree
       items = order.line_items.map(&method(:line_item))
 
       additional_adjustments = order.all_adjustments.additional
-      tax_adjustments = additional_adjustments.tax
-      shipping_adjustments = additional_adjustments.shipping
 
-      additional_adjustments.eligible.each do |adjustment|
-        next if (tax_adjustments + shipping_adjustments).include?(adjustment)
+      items_adjustments = additional_adjustments.eligible
+
+      items_adjustments.each do |adjustment|
         items << {
           :Name => adjustment.label,
           :Quantity => 1,
@@ -28,8 +27,8 @@ module Spree
       items.reject! do |item|
         item[:Amount][:value].zero?
       end
-      pp_request = provider.build_set_express_checkout(express_checkout_request_details(order, items))
 
+      pp_request = provider.build_set_express_checkout(express_checkout_request_details(order, items))
       begin
         pp_response = provider.set_express_checkout(pp_request)
         if pp_response.success?
@@ -112,11 +111,10 @@ module Spree
       # This retrieves the cost of shipping after promotions are applied
       # For example, if shippng costs $10, and is free with a promotion, shipment_sum is now $10
       shipment_sum = current_order.shipments.map(&:discounted_cost).sum
-
       # This calculates the item sum based upon what is in the order total, but not for shipping
       # or tax.  This is the easiest way to determine what the items should cost, as that
       # functionality doesn't currently exist in Spree core
-      item_sum = current_order.total - shipment_sum - current_order.additional_tax_total
+      item_sum = current_order.total - shipment_sum
 
       if item_sum.zero?
         # Paypal does not support no items or a zero dollar ItemTotal
@@ -143,7 +141,7 @@ module Spree
           },
           :TaxTotal => {
             :currencyID => current_order.currency,
-            :value => current_order.additional_tax_total
+            :value => positive_tax_adjustments.sum(&:amount)
           },
           :ShipToAddress => address_options,
           :PaymentDetailsItem => items,
@@ -174,6 +172,14 @@ module Spree
 
     def address_required?
       payment_method.preferred_solution.eql?('Sole')
+    end
+
+    def positive_tax_adjustments
+      @positive_tax_adjustments ||= current_order.all_adjustments.additional.tax.find_all { |a| a.amount >= 0 }
+    end
+
+    def negative_tax_adjustments
+      @negative_tax_adjustments ||= current_order.all_adjustments.additional.tax.find_all { |a| a.amount < 0 }
     end
   end
 end
