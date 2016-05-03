@@ -177,9 +177,5 @@ module Spree
     def positive_tax_adjustments
       @positive_tax_adjustments ||= current_order.all_adjustments.additional.tax.find_all { |a| a.amount >= 0 }
     end
-
-    def negative_tax_adjustments
-      @negative_tax_adjustments ||= current_order.all_adjustments.additional.tax.find_all { |a| a.amount < 0 }
-    end
   end
 end
