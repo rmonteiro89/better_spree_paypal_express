@@ -114,7 +114,8 @@ module Spree
       # This calculates the item sum based upon what is in the order total, but not for shipping
       # or tax.  This is the easiest way to determine what the items should cost, as that
       # functionality doesn't currently exist in Spree core
-      item_sum = current_order.total - shipment_sum
+    #  item_sum = current_order.total - shipment_sum
+      item_sum = current_order.total - shipment_sum - positive_tax_adjustments.sum(&:amount)
 
       if item_sum.zero?
         # Paypal does not support no items or a zero dollar ItemTotal
