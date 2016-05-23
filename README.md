@@ -1,5 +1,9 @@
 # Spree PayPal Express
 
+This fork is a fix for negative tax value. Paypal does not accept negative values for tax. It happens when a refund for the tax is made. Ex. A region that is not in the tax zone will receive a refund for the default tax.
+
+***Please to use it, fork this repo.***
+
 [![Build Status](https://travis-ci.org/spree-contrib/better_spree_paypal_express.svg?branch=master)](https://travis-ci.org/spree-contrib/better_spree_paypal_express)
 
 This is the official Paypal Express extension for Spree.
